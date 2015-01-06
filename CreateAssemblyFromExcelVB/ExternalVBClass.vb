@@ -295,7 +295,6 @@ Public Class ExternalVBClass
     ''' <param name="level">the structure level we are currently at</param>
     ''' <remarks></remarks>
     Public Sub ParseFolders(ByVal dir As DirectoryInfo, ByVal level As Long)
-        'If dir.Name = "951291-C" Then MsgBox("Add break points now to catch the error")
         Try
             If Not dir.Name.Contains("Superseded") Then
                 Dim friendlydirname As String = GetFriendlyDirName(dir.Name)
