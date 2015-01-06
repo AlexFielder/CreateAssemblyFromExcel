@@ -44,7 +44,7 @@ Public Class ExternalVBClass
     Public parentAssemblyFilename As String
     Public highestlevel As Long = 0
     Public foundfile As FileInfo
-    Private Property files As Object
+    Private Property files As IEnumerable(Of FileInfo)
 
     ''' <summary>
     ''' Begins our Create Assembly subroutine
@@ -114,6 +114,7 @@ Public Class ExternalVBClass
                     'it doesn't exist anywhere else in the Local Vault Working Folder
                     System.IO.File.Copy(basepartname, newfilename)
                 Else
+                    'it does exist and we (Currently) are creating a placeholder file to replace later, although this creates its own issues!
                     newfilename = System.IO.Path.GetDirectoryName(m_inventorApplication.ActiveDocument.FullDocumentName) & "\Replace with " & foundfile.Name
                     If Not System.IO.Path.GetExtension(newfilename) = expectedfileextension Then
                         'correct the extension or Inventor will shit the bed
@@ -165,6 +166,7 @@ Public Class ExternalVBClass
             Else
                 Dim tmpdoc As Inventor.Document = Nothing
                 For Each doc As Inventor.Document In m_inventorApplication.ActiveDocument.AllReferencedDocuments
+                    'at this point we should stop the insert of occurrences if the assembly is called "Replace With XXX" as it's doing work that's unecessary!
                     If doc.DisplayName = parentName & ".iam" Or doc.DisplayName.StartsWith("Replace With " & parentName, StringComparison.OrdinalIgnoreCase) Then
                         tmpdoc = doc
                         Exit For
@@ -263,14 +265,22 @@ Public Class ExternalVBClass
                                                                                          s.Name.EndsWith(".ipt", StringComparison.OrdinalIgnoreCase) OrElse _
                                                                                          s.Name.EndsWith(".iam", StringComparison.OrdinalIgnoreCase))
             End If
-            For Each file As FileInfo In files
-                If System.IO.Path.GetFileNameWithoutExtension(file.Name) = newfilename Then
-                    foundfilename = file.Name
-                    foundfile = file 'set this in case we can't return foundfilename
-                    Return foundfilename
-                    Exit For
-                End If
-            Next
+            Dim file As FileInfo = (From f As FileInfo In files
+                                   Where System.IO.Path.GetFileNameWithoutExtension(f.Name) = newfilename
+                                   Select f).FirstOrDefault()
+            If Not file Is Nothing Then
+                foundfile = file
+                foundfilename = file.Name
+            End If
+
+            'For Each file As FileInfo In files
+            '    If System.IO.Path.GetFileNameWithoutExtension(file.Name) = newfilename Then
+            '        foundfilename = file.Name
+            '        foundfile = file 'set this in case we can't return foundfilename
+            '        Return foundfilename
+            '        Exit For
+            '    End If
+            'Next
         Catch ex As Exception
             MessageBox.Show("Exception was: " + ex.Message + vbCrLf + ex.StackTrace)
         End Try
