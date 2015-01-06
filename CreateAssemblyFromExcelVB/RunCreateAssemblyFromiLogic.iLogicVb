@@ -1,13 +1,13 @@
 ﻿ 
 'AddReference "System.Core"
 'AddReference "System.Linq"
-AddReference "CreateAssemblyFromExcelVB.dll"
+'uncomment the following line to make this work with Inventor 2014
+'AddReference "CreateAssemblyFromExcelVB.dll" 'relies on the build path of "..\..\..\..\..\..\..\Program Files\Autodesk\Inventor 2014\Bin\iLogicAdd\"
 'Imports System.Collections.Generic
 'Imports System
 'Imports System.IO
 'Imports System.Linq
-'uncomment the following line to make this work with Inventor 2014
-'Imports CreateAssemblyFromExcelVB
+Imports CreateAssemblyFromExcelVB
 Sub Main()
 Dim XTVB As New CreateAssemblyFromExcelVB.ExternalVBClass
 Dim FilesArray As New ArrayList
