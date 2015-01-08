@@ -52,7 +52,16 @@ Public Class ExternalVBClass
     ''' <remarks>Uses the PartsList object passed to it from Inventor (which was ulitmately created from Excel data.</remarks>
     Public Sub BeginCreateAssemblyStructure()
         'define the parent assembly
-        Dim DirStruct As DirectoryInfo = New DirectoryInfo("E:\")
+        Dim DirStruct As DirectoryInfo = New DirectoryInfo(System.Environment.SpecialFolder.MyComputer)
+        Dim dlg1 = New FolderBrowserDialog
+        dlg1.Description = "Select a folder to extract to:"
+        dlg1.ShowNewFolderButton = True
+        dlg1.RootFolder = System.Environment.SpecialFolder.MyComputer
+        Dim result As DialogResult = dlg1.ShowDialog()
+        If result = DialogResult.OK Then
+            DirStruct = New DirectoryInfo(dlg1.SelectedPath)
+        End If
+
         Dim asmDoc As AssemblyDocument = m_inventorApplication.ActiveDocument
         parentAssemblyFilename = System.IO.Path.GetFileNameWithoutExtension(m_inventorApplication.ActiveDocument.DisplayName)
         Dim level As Long = 0
