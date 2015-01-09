@@ -35,6 +35,29 @@ Public Class ExternalVBClass
         End Set
     End Property
 
+    Public Shared m_partslist As List(Of SubObjectCls)
+
+    'Public Shared Property PartsList As List(Of SubObjectCls)
+    '    Get
+    '        PartsList = m_partslist
+    '    End Get
+    '    Set(ByVal value As List(Of SubObjectCls))
+    '        m_partslist = value
+    '    End Set
+    'End Property
+
+    Public Shared m_startfolder As String
+    Public Shared Property StartFolder As String
+        Get
+            Return m_startfolder
+        End Get
+        Set(ByVal value As String)
+            m_startfolder = value
+        End Set
+    End Property
+
+    'Public StartFolder As String
+
 #End Region
 
     Public PartsList As List(Of SubObjectCls)
@@ -46,23 +69,38 @@ Public Class ExternalVBClass
     Public foundfile As FileInfo
     Private Property files As IEnumerable(Of FileInfo)
 
+    'Public Sub PopulatePartsList(ByVal iLogicPartsList As List(Of SubObjectCls))
+    '    PartsList = iLogicPartsList
+    'End Sub
+
     ''' <summary>
     ''' Begins our Create Assembly subroutine
     ''' </summary>
     ''' <remarks>Uses the PartsList object passed to it from Inventor (which was ulitmately created from Excel data.</remarks>
     Public Sub BeginCreateAssemblyStructure()
         'define the parent assembly
-        Dim DirStruct As DirectoryInfo = New DirectoryInfo(System.Environment.SpecialFolder.MyComputer)
+        If StartFolder = String.Empty Then
+            StartFolder = System.Environment.SpecialFolder.MyComputer
+        End If
+        Dim DirStruct As DirectoryInfo = New DirectoryInfo(StartFolder)
         Dim dlg1 = New FolderBrowserDialog
-        dlg1.Description = "Select a folder to extract to:"
+        dlg1.Description = "Select a folder to work with:"
         dlg1.ShowNewFolderButton = True
-        dlg1.RootFolder = System.Environment.SpecialFolder.MyComputer
+        dlg1.SelectedPath = StartFolder
+        'dlg1.RootFolder = StartFolder
         Dim result As DialogResult = dlg1.ShowDialog()
         If result = DialogResult.OK Then
             DirStruct = New DirectoryInfo(dlg1.SelectedPath)
+        Else
+            MessageBox.Show("You need to pick a folder for this to work")
+            Exit Sub
         End If
-
-        Dim asmDoc As AssemblyDocument = m_inventorApplication.ActiveDocument
+        Dim asmDoc As AssemblyDocument
+        Try
+            asmDoc = m_inventorApplication.ActiveDocument
+        Catch ex As Exception
+            MessageBox.Show("You need to have an assembly open, not a part!")
+        End Try
         parentAssemblyFilename = System.IO.Path.GetFileNameWithoutExtension(m_inventorApplication.ActiveDocument.DisplayName)
         Dim level As Long = 0
         ParseFolders(DirStruct, level)
@@ -124,7 +162,8 @@ Public Class ExternalVBClass
                     System.IO.File.Copy(basepartname, newfilename)
                 Else
                     'it does exist and we (Currently) are creating a placeholder file to replace later, although this creates its own issues!
-                    newfilename = System.IO.Path.GetDirectoryName(m_inventorApplication.ActiveDocument.FullDocumentName) & "\Replace with " & foundfile.Name
+                    newfilename = foundfile.FullName
+                    'newfilename = System.IO.Path.GetDirectoryName(m_inventorApplication.ActiveDocument.FullDocumentName) & "\Replace with " & foundfile.Name
                     If Not System.IO.Path.GetExtension(newfilename) = expectedfileextension Then
                         'correct the extension or Inventor will shit the bed
                         newfilename = Left(newfilename, newfilename.Length - 4) & expectedfileextension
@@ -161,7 +200,7 @@ Public Class ExternalVBClass
             End If
             PosnMatrix = m_inventorApplication.TransientGeometry.CreateMatrix
             If parentName = System.IO.Path.GetFileNameWithoutExtension(m_inventorApplication.ActiveDocument.DisplayName) Then
-                'the parent assembly
+                'immediate descendants of the parent assembly
                 asmDoc = m_inventorApplication.ActiveDocument
                 Try
                     realOcc = asmDoc.ComponentDefinition.Occurrences.Add(newfilename, PosnMatrix)
@@ -173,6 +212,7 @@ Public Class ExternalVBClass
                     MessageBox.Show("Exception was: " + ex.Message + vbCrLf + ex.StackTrace)
                 End Try
             Else
+                'one of its grandchildren
                 Dim tmpdoc As Inventor.Document = Nothing
                 For Each doc As Inventor.Document In m_inventorApplication.ActiveDocument.AllReferencedDocuments
                     'at this point we should stop the insert of occurrences if the assembly is called "Replace With XXX" as it's doing work that's unecessary!
