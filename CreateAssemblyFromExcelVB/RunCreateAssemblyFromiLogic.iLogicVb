@@ -15,7 +15,8 @@ Sub Main()
     PartsList = New List(Of CreateAssemblyFromExcelVB.SubObjectCls)
     'pass the local variables to our external .dll
     XTVB.InventorApplication = ThisApplication
-    Dim filetab As String = InputBox("Which project?", "4 Letter Project Code", "CODE") + "-MODELLING-BASELINE"
+    Dim ProjectCode As String = InputBox("Which project?", "4 Letter Project Code", "CODE")
+    Dim filetab As String = ProjectCode + "-MODELLING-BASELINE"
     FilesArray = GoExcel.CellValues("C:\LEGACY VAULT WORKING FOLDER\Designs\Project Tracker.xlsx", filetab, "A3", "A4") ' sets excel to the correct sheet!
     For MyRow As Integer = 3 To 5000 ' max limit = 50 rows for debugging purposes
         Dim SO As CreateAssemblyFromExcelVB.SubObjectCls
@@ -50,6 +51,7 @@ Sub Main()
     'MessageBox.Show(PartsList.Count)
     'Call XTVB.PopulatePartsList(PartsList)
     XTVB.StartFolder = System.IO.Path.GetDirectoryName(System.IO.Path.GetDirectoryName(ThisApplication.ActiveDocument.FullDocumentName))
+    XTVB.ProjectCode = ProjectCode
     XTVB.PartsList = PartsList
     GoExcel.Close()
     'XTVB.FilesArray = FilesArray

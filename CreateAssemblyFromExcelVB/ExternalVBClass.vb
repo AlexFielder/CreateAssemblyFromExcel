@@ -35,8 +35,7 @@ Public Class ExternalVBClass
         End Set
     End Property
 
-    Public Shared m_partslist As List(Of SubObjectCls)
-
+    'Public Shared m_partslist As List(Of SubObjectCls)
     'Public Shared Property PartsList As List(Of SubObjectCls)
     '    Get
     '        PartsList = m_partslist
@@ -46,17 +45,18 @@ Public Class ExternalVBClass
     '    End Set
     'End Property
 
-    Public Shared m_startfolder As String
-    Public Shared Property StartFolder As String
-        Get
-            Return m_startfolder
-        End Get
-        Set(ByVal value As String)
-            m_startfolder = value
-        End Set
-    End Property
+    'Public Shared m_startfolder As String
+    'Public Shared Property StartFolder As String
+    '    Get
+    '        Return m_startfolder
+    '    End Get
+    '    Set(ByVal value As String)
+    '        m_startfolder = value
+    '    End Set
+    'End Property
 
-    'Public StartFolder As String
+    Public StartFolder As String
+    Public ProjectCode As String
 
 #End Region
 
@@ -194,10 +194,17 @@ Public Class ExternalVBClass
         Dim PosnMatrix As Matrix
         Try
             Dim newfilename As String = CreateAssemblyComponents(subObject)
-            Dim i As Integer = PartsList.FindIndex(Function(str As SubObjectCls) str.PartNo = subObject.PartNo)
-            If Not i = -1 Then
-                AligniPropertyValues(subObject, PartsList(i))
+            If Not System.IO.Path.GetDirectoryName(newfilename).Contains(ProjectCode) Then
+                'file is outside the working folder for this assembly
+
+            Else
+                'file is new.
+                Dim i As Integer = PartsList.FindIndex(Function(str As SubObjectCls) str.PartNo = subObject.PartNo)
+                If Not i = -1 Then
+                    AligniPropertyValues(subObject, PartsList(i))
+                End If
             End If
+            
             PosnMatrix = m_inventorApplication.TransientGeometry.CreateMatrix
             If parentName = System.IO.Path.GetFileNameWithoutExtension(m_inventorApplication.ActiveDocument.DisplayName) Then
                 'immediate descendants of the parent assembly
@@ -205,7 +212,8 @@ Public Class ExternalVBClass
                 Try
                     realOcc = asmDoc.ComponentDefinition.Occurrences.Add(newfilename, PosnMatrix)
                     realOccStr = realOcc.Name
-                    If Not realOccStr.StartsWith("Replace With", StringComparison.OrdinalIgnoreCase) Then 'assign iproperties to new parts
+                    If Not realOccStr.StartsWith("Replace With", StringComparison.OrdinalIgnoreCase) And _
+                        System.IO.Path.GetDirectoryName(newfilename).Contains(ProjectCode) Then 'assign iproperties to new parts
                         AssignIProperties(realOcc, subObject)
                     End If
                 Catch ex As Exception
@@ -233,7 +241,8 @@ Public Class ExternalVBClass
                     If realOcc Is Nothing Then 'only insert the occurrence once or we end up with a huge assembly containing multiple occurrences...
                         realOcc = asmDoc.ComponentDefinition.Occurrences.Add(newfilename, PosnMatrix)
                         realOccStr = realOcc.Name
-                        If Not realOccStr.StartsWith("Replace With", StringComparison.OrdinalIgnoreCase) Then 'assign iproperties to new parts
+                        If Not realOccStr.StartsWith("Replace With", StringComparison.OrdinalIgnoreCase) And _
+                            System.IO.Path.GetDirectoryName(newfilename).Contains(ProjectCode) Then 'assign iproperties to new parts
                             AssignIProperties(realOcc, subObject)
                         End If
                     End If
